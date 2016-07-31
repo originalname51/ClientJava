@@ -1,14 +1,26 @@
 package network_two;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class Client {
-	
+//http://www.rgagnon.com/javadetails/java-0542.html	
 private	Socket connectionSocket;
+private Socket 	DataServerSocket;
+private	ServerSocket dataServer;
+private InputStream is;
+private FileOutputStream file;
+private BufferedOutputStream bos;
+
 private	PrintWriter out;
 private	BufferedReader in;
 private BufferedReader consoleMessage;
@@ -30,6 +42,44 @@ public	Client(String hostName, int portnumber, String [] args){
 	}	
 }
 
+//http://www.rgagnon.com/javadetails/java-0542.html
+private void _make_client_socket()
+{
+	System.out.println(args[2]);
+	try {
+		if(args[2].equals("-l")){
+			System.out.println("Here I am ");
+		this.dataServer = new ServerSocket(Integer.parseInt(args[3]),50,InetAddress.getLocalHost());
+		System.out.println("Made Server Socket on " + InetAddress.getLocalHost() + " Port " + Integer.parseInt(args[3]));
+		}
+		else if(args[2].equals("-g"))
+		{
+		this.dataServer = new ServerSocket(Integer.parseInt(args[4]),50,InetAddress.getLocalHost());
+		System.out.println("Made Server Socket on " + InetAddress.getLocalHost() + " Port " + Integer.parseInt(args[4]));
+
+		}
+	} catch (NumberFormatException e) {
+		System.out.println("Server has invalid port number.\n");
+		e.printStackTrace();
+	} catch (UnknownHostException e) {
+		System.out.println("Server has invalid HostName.\n");
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	
+	try {
+		this.DataServerSocket = this.dataServer.accept();
+		this.is 			  = this.DataServerSocket.getInputStream();
+	} catch (IOException e) {
+		System.out.println("Failure to accept or make Server Socket Input Stream");
+		e.printStackTrace();
+	}
+}
+
+
 public void shutdown()
 {
 	try {
@@ -46,19 +96,43 @@ public void shutdown()
 
 public void getMessage()
 {
-	long fileSize = _messageSize();
-	
-	
+	String outputMessage;
+
+	try {
+		outputMessage = in.readLine();
+		if(outputMessage.equals("ERRO"))
+		{
+			System.out.println("Error Parsing Arguments");
+			return;
+		}
+		_make_client_socket();
+		
+		if(args[2] == "-l")
+		{
+			
+		}
+		else if(args[2] == "-g")
+		{
+			int messageLength = _messageSize();
+			if(messageLength == 0)
+			{
+				System.out.println("Error. File does not exist or is not availible.");
+			}
+		}		
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 }
 
-private long _messageSize()
+private int _messageSize()
 {
-	long size = 0;
+	int size = 0;
 	String howLongMessageIs;
 	
     try {
     	howLongMessageIs = in.readLine();
-    	  size = Long.parseLong(howLongMessageIs.trim());
+    	  size = Integer.parseInt(howLongMessageIs.trim());
 	} catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -82,6 +156,5 @@ public void sendCommand()
 	out.println(sendme);
 	return;
 }
-
 
 }
