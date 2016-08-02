@@ -45,18 +45,13 @@ public	Client(String hostName, int portnumber, String [] args){
 //http://www.rgagnon.com/javadetails/java-0542.html
 private void _make_client_socket()
 {
-	System.out.println(args[2]);
 	try {
 		if(args[2].equals("-l")){
-			System.out.println("Here I am ");
 		this.dataServer = new ServerSocket(Integer.parseInt(args[3]),50,InetAddress.getLocalHost());
-		System.out.println("Made Server Socket on " + InetAddress.getLocalHost() + " Port " + Integer.parseInt(args[3]));
 		}
 		else if(args[2].equals("-g"))
 		{
 		this.dataServer = new ServerSocket(Integer.parseInt(args[4]),50,InetAddress.getLocalHost());
-		System.out.println("Made Server Socket on " + InetAddress.getLocalHost() + " Port " + Integer.parseInt(args[4]));
-
 		}
 	} catch (NumberFormatException e) {
 		System.out.println("Server has invalid port number.\n");
@@ -107,9 +102,9 @@ public void getMessage()
 		}
 		_make_client_socket();
 		
-		if(args[2] == "-l")
+		if(args[2].equals("-l"))
 		{
-			
+			_lprotocol();
 		}
 		else if(args[2] == "-g")
 		{
@@ -141,6 +136,11 @@ private int _messageSize()
     return size;
 }
 
+public boolean _validateParameters(String [] arguments)
+{
+	
+return true;
+}
 //http://stackoverflow.com/questions/4644415/java-how-to-get-input-from-system-console
 //http://stackoverflow.com/questions/2340106/what-is-the-purpose-of-flush-in-java-streams
 public void sendCommand()
@@ -156,5 +156,40 @@ public void sendCommand()
 	out.println(sendme);
 	return;
 }
+
+
+public void _lprotocol()
+{
+	try {
+		BufferedReader fileList	 = new BufferedReader(new InputStreamReader(this.DataServerSocket.getInputStream()));
+	
+		int nameAmount = 0;
+		nameAmount = _messageSize();		
+		String period = ".";
+		String twoP   = "..";
+		String File;
+		System.out.println("File List Is Following:");
+		for(int i =0; i < nameAmount; i++)
+	{
+		char[] arr = new char[256];
+		fileList.read(arr, 0, 256);
+		File = String.valueOf(arr);
+		File = File.trim();
+		if(!(File.equals(period)) && !(File.equals(twoP)))
+		{
+			System.out.println(File);
+		}			
+	}
+		fileList.close();	
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	
+
+	
+
+}
+
 
 }
