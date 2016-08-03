@@ -2,6 +2,7 @@ package network_two;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -106,13 +107,9 @@ public void getMessage()
 		{
 			_lprotocol();
 		}
-		else if(args[2] == "-g")
+		else if(args[2].equals("-g"))
 		{
-			int messageLength = _messageSize();
-			if(messageLength == 0)
-			{
-				System.out.println("Error. File does not exist or is not availible.");
-			}
+			_gprotocol();
 		}		
 	} catch (IOException e) {
 		// TODO Auto-generated catch block
@@ -191,5 +188,52 @@ public void _lprotocol()
 
 }
 
+
+public void _gprotocol()
+{
+	int bytesRead;
+    int current = 0;
+    byte [] myByteArray = new byte [50000000];
+    
+    
+	int messageLength = _messageSize();
+	if(messageLength == 0)
+	{
+		System.out.println("Error. File does not exist or is not availible.");
+		return;
+	}
+	while(messageLength != 0)
+	{
+	    try {
+			this.file = new FileOutputStream(args[3]);
+			this.bos  = new BufferedOutputStream(this.file);
+			
+		      do {
+		          bytesRead =
+		             this.is.read(myByteArray, current, messageLength);
+		          if(bytesRead >= 0) current += bytesRead;
+		       } while(bytesRead > -1);
+			
+
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    messageLength = _messageSize();
+	}	
+	
+	try {
+		this.bos.write(myByteArray,0,current);
+		this.bos.flush();
+	      System.out.println("File " + args[3]
+	              + " downloaded (" + current + " bytes read)");
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+}
 
 }

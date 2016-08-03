@@ -17,7 +17,7 @@ public class MainClass {
 
 public static boolean ValidateParameters(String [] arguments)
 {
-	if (arguments[2].equals("-l") || arguments[2].equals("-g") && arguments.length  < 5)
+	if (arguments[2].equals("-l") || arguments[2].equals("-g") && arguments.length  < 6)
 		return true;
 	else
 		return false;
