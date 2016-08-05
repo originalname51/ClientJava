@@ -19,9 +19,7 @@ public class MainClass {
 public static boolean ValidateParameters(String [] arguments)
 {
 
-/*
- * validate to see if port numbers are correct. Server and file not validated.
- * */
+//  validate to see if port numbers are correct. Server and file not validated. 
 	String line = "(\\d{1,5})";
 	if(arguments[2].equals("-l") && arguments.length < 5)
 		if(arguments[1].matches(line) && arguments[3].matches(line))
