@@ -15,7 +15,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class Client {
-	// http://www.rgagnon.com/javadetails/java-0542.html
 	private Socket connectionSocket;
 	private Socket DataServerSocket;
 	private ServerSocket dataServer;
@@ -53,12 +52,8 @@ public class Client {
 	}
 
 /*
- * http://www.rgagnon.com/javadetails/java-0542.html
  * This will make a server socket for the FTP data connection using the arguments.
- * It will either use the 3rd or 4th argument.
- * 
- * 
- * 
+ * It will either use the 3rd or 4th argument. 
  * */
 	private void _make_client_socket() {
 		
@@ -110,7 +105,7 @@ public class Client {
 	}
 
 	/*
-	 *  1) Recieve message from the server to see if command is valid.
+	 *  1) Receive message from the server to see if command is valid.
 	 *  2) If command is valid make a ftp socket and have the server connect
 	 *  3) if the argument was -l go to l protocol. Else, goto G protocol.
 	 *  
@@ -219,7 +214,15 @@ public class Client {
  * 
  * 1) Set a byte array to ~500,000 bytes.
  * 2) Check to see if file already exist, if it does add an integer value to the end up to 100 or throw an error.
- * 3) 
+ * 3) Make a file with the filename attempting to get from server
+ * 4) Obtain initial message size from server. If value is -1 there has been an error. Handle error and return to main.
+ * 5) While the message Length is not 0 read the file into the pre-existing byte array. Keep track of how many bytes are read.
+ * 6) Write the byte array to the file.
+ * 
+ * This is primarily based on the following code: 
+ * http://www.rgagnon.com/javadetails/java-0542.html
+ * https://www.caveofprogramming.com/java/java-file-reading-and-writing-files-in-java.html
+ * https://docs.oracle.com/javase/tutorial/essential/io/bytestreams.html
  * */
 	public void _gprotocol() {
 		int bytesRead;
@@ -283,11 +286,13 @@ public class Client {
 				} while (bytesRead > -1);
 
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
+				System.out.println("Error. File does not exist or is not availible.");
 				e.printStackTrace();
+				return;
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				System.out.println("Error in IO getting file bytes");
 				e.printStackTrace();
+				return;
 			}
 			messageLength = _messageSize();
 		}
@@ -297,9 +302,19 @@ public class Client {
 			this.bos.flush();
 			System.out.println("File " + args[3] + " downloaded (" + current + " bytes read). Transfer Complete.");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error writing file");
+			e.printStackTrace();
+			return;
+		}
+		try {
+			this.bos.close();
+			this.is.close();
+			DataServerSocket.close();
+			dataServer.close();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
 
 }
