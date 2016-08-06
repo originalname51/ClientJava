@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 public class Client {
 	private Socket connectionSocket;
@@ -29,7 +30,8 @@ public class Client {
 	
 	/*
 	 * Client constructor. Will make a socket using the hostname and portnumber
-	 * as well as set up input and output streams.
+	 * as well as set up input and output streams. NOTE: This does not set up or have anything
+	 * to do with FTP data ports.
 	 * 
 	 * */
 	public Client(String hostName, int portnumber, String[] args) {
@@ -53,7 +55,10 @@ public class Client {
 
 /*
  * This will make a server socket for the FTP data connection using the arguments.
- * It will either use the 3rd or 4th argument. 
+ * It will either use the 3rd or 4th argument depending on the listing (arg[2] of l means 3rd argument is port, 
+ * arg[2] of g means 4th argument is port number.
+ * 
+ * Number format exception should never happen as it is tested for in main.
  * */
 	private void _make_client_socket() {
 		
@@ -112,27 +117,19 @@ public class Client {
 	 *  Note: Connections are shut down in sub functions and in main.
 	 * */
 	public void getMessage() {
-		String outputMessage;
 
 		//See if server has validated argument.
-		try {
-			outputMessage = in.readLine();
-			if (!outputMessage.equals("PASS")) {
-				System.out.println("Error Parsing Arguments");
+			int serverResponse = _messageSize();
+			if (serverResponse != 0){
+				System.out.println("Server had error Parsing Arguments. Please check arguments and try again.");
 				return;
 			}
-			
 			_make_client_socket(); //set up ftp connection
-
 			if (args[2].equals("-l")) {
 				_lprotocol();	//Execute L commands.
 			} else if (args[2].equals("-g")) {
 				_gprotocol();	//Execute G commands.
 			}
-		} catch (IOException e) {
-			shutdown();
-			e.printStackTrace();
-		}
 	}
 
 	/*
@@ -142,12 +139,14 @@ public class Client {
 	private int _messageSize() {
 		int size = 0;
 		String howLongMessageIs;
-		char [] buff = new char[256];
+		char [] buff = new char[17];
+		Arrays.fill(buff, '\0');
 		try {
-			in.read(buff,0,256);
+			in.read(buff,0,17);
 			howLongMessageIs = String.valueOf(buff);
 			size = Integer.parseInt(howLongMessageIs.trim());
 		} catch (IOException e) {
+			System.out.println("Failure in _messageSize");
 			shutdown();
 			e.printStackTrace();
 		}
@@ -169,7 +168,7 @@ public class Client {
 		for (int i = 0; i < args.length; i++) {
 			sendme = sendme + args[i] + " ";
 		}
-		out.println(Integer.toString(sendme.length() + CHAR_OFFSET + 1));
+		out.println(Integer.toString(sendme.length() + CHAR_OFFSET));
 		out.flush();
 		out.println(sendme);
 		return;
@@ -227,19 +226,19 @@ public class Client {
 	public void _gprotocol() {
 		int bytesRead;
 		int current = 0;
-		byte[] myByteArray = new byte[50000000];
 
-
+		//Check to see if file exist. If it does, try and create a new file with a slightly different name.
 		File f = new File(args[3]);
 		if(f.exists())
 		{
 			boolean works = true;
-			for(int i = 0; i < 100; i++)
+			//Works for files up to .
+			for(int i = 1; i < 1000; i++)
 			{
-				f = new File(args[3] + i);
+				f = new File(args[3] + "(" + i + ")");
 				if(!f.exists())
 				{	
-					args[3] = args[3] + i;
+					args[3] = args[3] + "(" + i + ")";
 					works = true;
 					break;
 				}
@@ -257,7 +256,20 @@ public class Client {
 				return;
 			}
 		}
-		
+		int fileSize = _messageSize();
+		//Make a byte array from the filesize. add a buffer of 30000 bytes. Exit if filesize if -1.(error from server)
+		byte[] myByteArray = new byte[fileSize + 30000];	
+		if(fileSize == -1)
+		{
+			System.out.println("Server does not have file. Exiting...");
+			  try {
+				DataServerSocket.close();
+				  dataServer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
 		try {
 			this.file = new FileOutputStream(args[3]);
 			this.bos = new BufferedOutputStream(this.file);
@@ -273,14 +285,16 @@ public class Client {
 		
 		
 		int messageLength = _messageSize();
-		if (messageLength == -1) {
-			System.out.println("Error. File does not exist or is not availible.");
-			return;
-		}
+		
+		/*
+		 * Code adapted from tutorial java guide. This will use message length to control 
+		 * the file transfer.
+		 * */
 		while (messageLength != 0) {
 			try {
 				do {
-					bytesRead = this.is.read(myByteArray, current, messageLength);
+					//Read the amount sent to a byte array
+					bytesRead = this.is.read(myByteArray, current, messageLength-1);
 					if (bytesRead >= 0)
 						current += bytesRead;
 				} while (bytesRead > -1);
@@ -294,9 +308,13 @@ public class Client {
 				e.printStackTrace();
 				return;
 			}
-			messageLength = _messageSize();
+			messageLength = _messageSize();	//see if anymore data was sent.
 		}
-
+		
+		System.out.println("File Succesfully Recived. Writing data to file....");
+		/*
+		 * This code is from the tutorial code cited in the header. It writes the byte array to the file.
+		 * */
 		try {
 			this.bos.write(myByteArray, 0, current);
 			this.bos.flush();
@@ -316,5 +334,4 @@ public class Client {
 		}
 		
 	}
-
 }
