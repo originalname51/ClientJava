@@ -257,6 +257,7 @@ public class Client {
 			}
 		}
 		int fileSize = _messageSize();
+		System.out.println(fileSize);
 		//Make a byte array from the filesize. add a buffer of 30000 bytes. Exit if filesize if -1.(error from server)
 		byte[] myByteArray = new byte[fileSize + 30000];	
 		if(fileSize == -1)
@@ -284,21 +285,20 @@ public class Client {
 		}
 		
 		
-		int messageLength = _messageSize();
+//		int messageLength = _messageSize();
 		
 		/*
 		 * Code adapted from tutorial java guide. This will use message length to control 
 		 * the file transfer.
 		 * */
-		while (messageLength != 0) {
+//		while (messageLength != 0) {
+		int howManyRead = 0;
 			try {
 				do {
 					//Read the amount sent to a byte array
-					bytesRead = this.is.read(myByteArray, current, messageLength-1);
-					if (bytesRead >= 0)
-						current += bytesRead;
+					bytesRead = this.is.read(myByteArray, 0, fileSize);
+					howManyRead += bytesRead;
 				} while (bytesRead > -1);
-
 			} catch (FileNotFoundException e) {
 				System.out.println("Error. File does not exist or is not availible.");
 				e.printStackTrace();
@@ -308,8 +308,8 @@ public class Client {
 				e.printStackTrace();
 				return;
 			}
-			messageLength = _messageSize();	//see if anymore data was sent.
-		}
+//			messageLength = _messageSize();	//see if anymore data was sent.
+//		}
 		
 		System.out.println("File Succesfully Recived. Writing data to file....");
 		/*
