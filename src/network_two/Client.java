@@ -206,17 +206,17 @@ public class Client {
 			}
 			e.printStackTrace();
 		}
+		
 
 	}
 /*
  * G protocol will get a file or return an error.
  * 
- * 1) Set a byte array to ~500,000 bytes.
- * 2) Check to see if file already exist, if it does add an integer value to the end up to 100 or throw an error.
- * 3) Make a file with the filename attempting to get from server
- * 4) Obtain initial message size from server. If value is -1 there has been an error. Handle error and return to main.
- * 5) While the message Length is not 0 read the file into the pre-existing byte array. Keep track of how many bytes are read.
- * 6) Write the byte array to the file.
+1) Check to see if file exist. Handle it if it does (up to 1000 identical names)
+2) set Filesize to total byte size of file.
+3) Set byte array to a buffer amount + the filesize
+4) Read bytes into buffer
+5) Write bytes to file and exit
  * 
  * This is primarily based on the following code: 
  * http://www.rgagnon.com/javadetails/java-0542.html
@@ -225,8 +225,6 @@ public class Client {
  * */
 	public void _gprotocol() {
 		int bytesRead;
-		int current = 0;
-
 		//Check to see if file exist. If it does, try and create a new file with a slightly different name.
 		File f = new File(args[3]);
 		if(f.exists())
@@ -257,7 +255,7 @@ public class Client {
 			}
 		}
 		int fileSize = _messageSize();
-		System.out.println(fileSize);
+		System.out.println("Getting ready to download file " +  args[3] + " which is " + fileSize + " bytes big.");
 		//Make a byte array from the filesize. add a buffer of 30000 bytes. Exit if filesize if -1.(error from server)
 		byte[] myByteArray = new byte[fileSize + 30000];	
 		if(fileSize == -1)
@@ -284,14 +282,11 @@ public class Client {
 			e1.printStackTrace();
 		}
 		
-		
-//		int messageLength = _messageSize();
-		
 		/*
 		 * Code adapted from tutorial java guide. This will use message length to control 
 		 * the file transfer.
 		 * */
-//		while (messageLength != 0) {
+		System.out.println("File transfer in process....");
 		int howManyRead = 0;
 			try {
 				do {
@@ -308,17 +303,15 @@ public class Client {
 				e.printStackTrace();
 				return;
 			}
-//			messageLength = _messageSize();	//see if anymore data was sent.
-//		}
 		
 		System.out.println("File Succesfully Recived. Writing data to file....");
 		/*
 		 * This code is from the tutorial code cited in the header. It writes the byte array to the file.
 		 * */
 		try {
-			this.bos.write(myByteArray, 0, current);
+			this.bos.write(myByteArray, 0, fileSize);
 			this.bos.flush();
-			System.out.println("File " + args[3] + " downloaded (" + current + " bytes read). Transfer Complete.");
+			System.out.println("File " + args[3] + " downloaded (" + howManyRead + " bytes read). Transfer Complete.");
 		} catch (IOException e) {
 			System.out.println("Error writing file");
 			e.printStackTrace();
